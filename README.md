@@ -2,42 +2,75 @@
 
 ## Problem Statement
 
-Automatic screening and ranking of resumes based on job description, extraction of candidate’s skills and identification of skill gaps.
+Automated screening and ranking of resumes based on a certain job description, extraction
+of candidate skills, identification of skills that are missing with respect to the job
+description.
 
 ## Data
 
-Raw data is not present in this repo (see .gitignore). Dataset link: https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset
-To replicate, download the CSV file and put it into Google Drive folder at FUTURE_ML_03/data/, or in data/ directory if run locally outside of Colab.
+Raw data not included in the repository (refer to .gitignore). Datasets used:
+- Resumes: https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset
+- Job descriptions: https://www.kaggle.com/datasets/PromptCloudHQ/us-jobs-on-monstercom
+
+To replicate, download both files and put them in Google Drive directory FUTURE_ML_03/data/
+or in directory data/ if working outside Colab.
 
 ## Dataset
 
-- **Source:** Kaggle - [Resume Dataset by snehaanbhawal]
-- **Files:** Resume.csv, data-folder consisting all the resumes in pdf formats
-- **Number of samples:** 2,484 resumes in total
-- **Categories:** 24 in total
-- **Categories used in this project:** Information-Technology, Engineering, Finance, Sales, HR, Healthcare
-  (out of all 24 categories due to unique skill vocabulary in each of them, verified using word frequency analysis. CONSULTANT category was also considered, but excluded because of lack of distinctive terminology;
-  DESIGNER was considered, but excluded because of overlap with ENGINEERING category)
-- **Job Descriptions:** not present in the resume dataset; need to be separately sourced for each of the selected 6 categories, because this task requires comparison of resumes with specific job descriptions, not classification of resumes into categories
+### Resumes
+- **Source:** Kaggle - snehaanbhawal/resume-dataset
+- **Number of resumes:** Total of 2,484 resumes, in 24 categories.
+- **Categories chosen for this project:** Information-Technology, Engineering, Finance,
+  Sales, HR, Healthcare (selected for diverse vocabulary of skills – verified through word
+  frequency analysis). CONSULTANT category was considered but rejected because of lack
+  of distinctive vocabulary, DESIGNER was considered but rejected due to overlap with engineering.
+
+### Job Description Sources
+- **Source:** Kaggle - PromptCloudHQ/us-jobs-on-monstercom (22,000 US jobs, scraped from Monster.com)
+- **Gap identified:** there are no corresponding job descriptions in the resume data set; hence a job description source had to be found that would allow us to do resume-to-job description matching.
+- **Approach to selection:** one sample job description per category was chosen (not one per resume) because we have to rank multiple resumes against one job role, and having multiple job descriptions per category for each resume will make such ranking impossible
+- **Sectors in Monster.com to categories in resume data set mapping** were used to identify candidates:
+
+| Resume Category    | Monster.com Sector | Selected Job Title                |
+|--------------------|------------------|-----------------------------------|
+| Information-Technology | IT/Software Development   | IT Support Technician Job in Madison  |
+| Engineering         | Engineering          | Sr. Process Engineer             |
+| Finance            | Accounting/Finance/Insurance | Senior Accountant/Analyst Job in Denver |
+| Sales              | Sales/Retail/Business Development | Sales Professional Job in Las Vegas  |
+| Human Resources    | Human Resources    | Human Resources Manager Job in Dallas |
+| Healthcare         | Medical/Health      | Registered Nurse - Clinic Job in Houston |
+
+-**Intentional exclusions during resume selection:** “Software Engineer” was excluded from the
+  Engineering category (it would clash with the IT terminology); finance-related or too
+  specialized posts were excluded from Sales (e.g., "Financial Advisor/Financial Sales", 
+  "Bilingual Newborn Photographer/Sales") in favor of a general "Sales Professional" post.
 
 ## Scope
 
-Explore the resume dataset, perform cleaning and analysis of resumes, extract skills,
-source job descriptions for selected categories, develop a resume-JD matching/score
-algorithm, rank candidates, and uncover skill gaps compared to job descriptions.
+Explore the resume dataset, cleanse and analyze resume texts, extract skills, find job
+descriptions related to selected categories, develop resume-to-job description matching and
+ranking system, rank candidates in relation to their respective job description and detect
+skill gaps.
 
 ## Approach (Outline)
 
-Loading Data -> Selecting and Verifying Categories -> Text Cleaning -> Extracting Skills ->
-Source Job Descriptions -> Resume-JD Similarity Matching -> Candidate Ranking ->
-Skill Gaps Identification
+Loading Data -> Categories Selection and Validation -> Job Descriptions Selection -> 
+Text Cleansing -> Skills Extraction -> Resume-JD Similarity Matching -> Candidate Ranking
+-> Skill Gap Detection
+
+## Design Note: Matching Scope
+
+This design is meant to rank multiple resumes to ONE job description for each role (matches task requirement - "rank resumes based on a given job role"), NOT one unique JD for each resume. Underlying match function (similarity between a resume and a JD text) is category agnostic and can be applied to any resume-JD pair; but only 6 categories were included in scope of this project.
 
 ## Progress (Day 1 of 10)
 
-- Repository set up (FUTURE_ML_03)
-- Dataset selection and download (from Kaggle)
-- Environment setup (Colab + Drive)
-- Dataset loading and exploration
-- Select 6 categories using word-frequency analysis and drop 2 categories
-(CONSULTANT, DESIGNER) due to poor categorical distinction
-- Discovered the gap: need to source job descriptions separately (not in the original dataset)
+- Created project repository (FUTURE_ML_03)
+- Downloaded resume dataset from Kaggle
+- Set up environment (Colab + Drive)
+- Loaded dataset, analyzed category distribution
+- Selected 6 resume categories using word-frequency analysis, and replaced 2
+  initially-considered categories (CONSULTANT, DESIGNER) as it was proved that those categories lack distinctiveness
+- Identified limitation: need to source separate job descriptions (not present in initial resume dataset)
+- Sourced and selected 6 job descriptions (one for each category) from job postings
+  dataset, avoiding skills overlapping between different categories
+- Saved selected job descriptions as pickle for future use in matching and ranking steps
