@@ -74,3 +74,21 @@ This design is meant to rank multiple resumes to ONE job description for each ro
 - Sourced and selected 6 job descriptions (one for each category) from job postings
   dataset, avoiding skills overlapping between different categories
 - Saved selected job descriptions as pickle for future use in matching and ranking steps
+
+## Day 2 Findings (Text Preprocessing)
+
+- Built a text cleaning pipeline using spaCy: tokenization -> lemmatization -> stopword
+  removal, in that specific order (lemmatizing first ensures grammatical variants of
+  stopwords, e.g. is/was/were/being, are all normalized to "be" before stopword matching,
+  rather than relying on an exhaustive raw-form stopword list)
+- Chose lemmatization over stemming for accuracy - stemming risks overstemming errors
+  (e.g. "organization" and "organ" reducing to the same stem), which would create false
+  skill matches
+- Discovered spaCy's default stopword list missed resume-specific boilerplate (city,
+  state, company, work, include) - built a custom stopword list using systematic
+  cross-category word-frequency analysis rather than manual guessing
+- Deliberately did NOT remove "customer", "management", "service" despite appearing
+  across all categories - frequency alone doesn't mean a word lacks meaning; these are
+  genuine business terms, not grammatical noise
+- Applied cleaning to all 700 resumes (6 selected categories) and 6 job descriptions,
+  saved as pickles for tomorrow's skill extraction wor
