@@ -93,7 +93,7 @@ This design is meant to rank multiple resumes to ONE job description for each ro
 - Applied cleaning to all 700 resumes (6 selected categories) and 6 job descriptions,
   saved as pickles for tomorrow's skill extraction work
 
-  ## Day 13 Findings (Skill Extraction)
+  ## Day 3 Findings (Skill Extraction)
 
 - Tested spaCy's default NER on sample text - confirmed it does NOT recognize skills
   out of the box (e.g. "SQL" was tagged as ORG, "Python" and "project management" were
