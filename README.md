@@ -91,4 +91,23 @@ This design is meant to rank multiple resumes to ONE job description for each ro
   across all categories - frequency alone doesn't mean a word lacks meaning; these are
   genuine business terms, not grammatical noise
 - Applied cleaning to all 700 resumes (6 selected categories) and 6 job descriptions,
-  saved as pickles for tomorrow's skill extraction wor
+  saved as pickles for tomorrow's skill extraction work
+
+  ## Day 13 Findings (Skill Extraction)
+
+- Tested spaCy's default NER on sample text - confirmed it does NOT recognize skills
+  out of the box (e.g. "SQL" was tagged as ORG, "Python" and "project management" were
+  not recognized at all)
+- Built a custom skill list using EVIDENCE from data (bigram/unigram frequency analysis
+  per category), not manual guessing - mirrors the same evidence-based approach used for
+  category selection (Day 11) and custom stopwords (Day 12)
+- Excluded generic cross-category business terms (management, business, team, process)
+  from the skill list - these carry meaning but have low discriminative value for
+  ranking, since they appear roughly equally across all categories
+- Implemented skill extraction using spaCy's EntityRuler (rule-based pattern matching,
+  NOT a trained NER model) - confirmed and correctly labeled as keyword/
+  phrase matching, not true NER
+- Extracted and deduplicated skills for all resumes and job descriptions
+- Known limitation identified and verified with real evidence: keyword matching cannot
+  disambiguate context (e.g. "policy" in HR vs. Finance context are different concepts
+  but get tagged identically) - documented rather than hidden
