@@ -111,3 +111,27 @@ This design is meant to rank multiple resumes to ONE job description for each ro
 - Known limitation identified and verified with real evidence: keyword matching cannot
   disambiguate context (e.g. "policy" in HR vs. Finance context are different concepts
   but get tagged identically) - documented rather than hidden
+
+  ## Day 4 Findings (TF-IDF + Cosine Similarity Matching)
+
+- Built TF-IDF vectors across combined resume+JD corpus, split back into resume/JD
+  matrices preserving original order, computed cosine similarity between all
+  resume-JD pairs
+- Built a category-matching check (not true ranking evaluation) using existing
+  resume category labels as ground truth - initial accuracy: 55%
+- Root cause investigation found organization/company names (e.g. "teamsoft", "aflac",
+  "experis") were dominating TF-IDF weights due to high IDF (rare across the collection)
+  despite carrying no skill-relevant meaning - different from "too common" stopword problem
+- Fixed systematically using spaCy's built-in (trained) NER to detect and remove ORG
+  entities from job description text
+- Accuracy improved from 55% to 62.7% after the fix
+- NON revomable limitation(using spaCy): 3/14 instances of one org name survived removal due to
+  missing whitespace after punctuation in the source text (a raw-data quality issue,
+  not a pipeline bug) - accepted as a documented, proportionate tradeoff rather than
+  engineered around further
+- Investigated remaining Healthcare->Sales mismatches and found they are NOT matching
+  errors - they are genuinely hybrid/ambiguous resumes (healthcare recruiting, medical
+  billing/insurance, medical transcription) that legitimately span multiple categories
+- Important clarification: this 62.7% is a category-matching check, NOT a
+  measurement of ranking quality - true ranking evaluation (comparing multiple resumes
+  against ONE job description) is separate, future work
