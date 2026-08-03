@@ -209,3 +209,29 @@ candidates considered", not "95% qualified".
 Function correctness is determined by its USE CONTEXT, not by its implementation per se.
 The extract_skills() function was correct in use with resumes but was incorrect when used
 with job postings, even though it was the same code being used on seemingly identical data.
+
+## Day 6 Findings (Skill Gap Identification)
+
+- Added method identify_missing_skills(): set difference between JD required skills and resume
+  skills (like the intersection logic that is already implemented in skill_overlap_score)
+- Added method full_candidate_report(): combines ranking (Day 5) and missing_skills into
+  one output for stakeholders - shows only Category, match_percentage, and
+  missing_skills; (all internal columns such as similarity_score/skill_overlap removed)
+- First finding: IT, SALES, HR have no missing skills even in rank 20, but FINANCE and
+  HEALTHCARE show interesting missing skills
+- Checked if it is a bug by checking worst ranked resumes for IT (not just the best ones)
+  and found that system properly shows all 4 missing skills in WORST ranked resumes in
+  IT (they have no common skills with SALES/ENGINEERING/HEALTHCARE)
+- The root cause of the brief list of missing IT skills is proven by full text evidence: the IT skill list
+  is quite comprehensive (29 authentic IT skills: database, network, server, sql, cisco,
+  active directory, etc.) but the text of this particular job posting only uses 3-4 of them
+  (application, software, technical) - the posting is a real but shallow IT support job
+  description (previously marked as boilerplate-laden on Day 4) that even mentions a
+  specific piece of software ("landesk") that is not found in our skill list, as it was not
+  in the original list generated through TF-IDF
+- Once again proves (same conclusion as on Day 5): keyword-driven extraction is possible
+  to extract only those skills that EXPLICITLY mentioned in the specific job posting's text
+  - no matter how comprehensive your skill list, a lack of explicit technical terms in the
+  document's text makes the extraction impossible
+- This is noted down as a fundamental limitation of the current technique, not as a bug -
+  a truly technical IT job posting would produce longer missing skills list in the same conditions
