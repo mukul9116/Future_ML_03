@@ -100,7 +100,7 @@ This design is meant to rank multiple resumes to ONE job description for each ro
   not recognized at all)
 - Built a custom skill list using EVIDENCE from data (bigram/unigram frequency analysis
   per category), not manual guessing - mirrors the same evidence-based approach used for
-  category selection (Day 11) and custom stopwords (Day 12)
+  category selection (Day 1) and custom stopwords (Day 2)
 - Excluded generic cross-category business terms (management, business, team, process)
   from the skill list - these carry meaning but have low discriminative value for
   ranking, since they appear roughly equally across all categories
@@ -135,3 +135,77 @@ This design is meant to rank multiple resumes to ONE job description for each ro
 - Important clarification: this 62.7% is a category-matching check, NOT a
   measurement of ranking quality - true ranking evaluation (comparing multiple resumes
   against ONE job description) is separate, future work
+
+  ## Day 5 Findings (Ranking Model) — Full Debugging Log
+
+It was the most comprehensive debugging process in the course of the whole project so far.
+Starting from "build a ranking function," it led to resolving four completely different,
+compounding bugs. Documented fully since each of them is an evidence-based engineering
+discovery, not a guess.
+
+### Problem 1: skill_overlap trivially hit 1.0 in case of unrelated resumes
+rank_resume_for_job() was implemented combining similarity_score() and skill_overlap(). The first
+test of the new function against IT job description brought up HR, Healthcare, and Finance
+resumes in top ranks; zero resumes matching the IT JD. Upon investigation, it turned out that
+the list of extracted_skills for the IT JD contained only 7 words, among which (account, client,
+benefit) were too generic and could be found in practically any resume, resulting in skill_overlap
+equal to 1.0.
+
+### Problem 2: List of skills became too tight after previous narrowing
+Discovered the problem with the very skill list, which has been progressively narrowed to decrease
+the noise on Day 3, leaving IT category with nothing to match. Skill list was re-created by the use of
+TfidfVectorizer (top 150 words per category, ngram_range=(1,2)) and manual curation into a clean,
+evidence-based list (see skill_list in 03_skill_extraction).
+
+### Problem 3: Whether the issue was with the IT Job Description
+To ensure that the skill set for the job was truly done, tried whether switching to another IT
+job description which would be highly technical ("Database Architect Job in Denver" – focused
+on SQL, servers, storage) would fix the problem. However, it DID NOT; the switched job
+description could extract only 1 skill using the same pipeline. This proved that the problem
+was NOT about the specific Job Description chosen (which was the case with Day 4
+Engineering Job Description), but rather it lied somewhere deeper within the extraction
+process. Switched back to the original IT Job Description ("IT Support Technician Job in
+Madison").l IT JD ("IT Support Technician Job in
+Madison") since swapping did not help.
+
+### Problem 4 (ROOT CAUSE): extract_skills() was the wrong function for JD requirements
+Even after reworking the skills list based on TF-IDF evidence, the incorrect ranking of IT and
+SALES still persisted. After a deeper analysis of extract_skills(), the real problem appeared to
+be that this function was designed to be agnostic of category (RIGHT in the case of resumes, as
+candidates’ true skills can belong to several categories) and was mistakenly used for generating
+“required skills” list for each JD. The problem with this approach is that every word in skill-list of
+ANY category that appears ANYWHERE in JD’s raw text (including recruiter boilerplate words
+like "benefit," "candidate," "recruiting" in the IT JD’s compensation section, and "healthcare,"
+"insurance," "medical" in the SALES (Aflac insurance) JD's text) was taken into account as a
+requirement of this JD despite originating from another category's skill list.
+
+FIX: implemented a new extract_skills_for_category(text, category) function that filtered entities
+to ONLY the label matching the category of the JD in question, and used it only in JD generation.
+Extract_skills() was not changed for resumes – on purpose, as category-agnostic extraction is
+right here.
+
+### Result
+The per-category top-7 accuracy went from being completely broken (0/7 for IT, 0/7 for SALES)
+to being 40/42 accurate for all 6 categories after the fix was implemented, which fully resolved
+what looked, at several points during the day, to be an irreducible structural limitation.
+
+### The weighting 0.7/0.3 stays over 0.9/0.1
+We tested three weightings (0.7/0.3, 0.8/0.2, 0.9/0.1) using two metrics: an aggregate
+category-matching sanity check (argmax for all 6 job descriptions) and the actual quality of
+per-role top-7 rankings (number of correctly ranked resumes out of top-7). The metrics turned out to
+be INCONGRUENT: 0.9/0.1 had higher score on the sanity check (75% vs 62.7%) but produced
+WORSE rankings (IT category went down from 6/7 to 4/7 correct resumes in the top 7). 0.7/0.3 was chosen as the final weighting in our production ranking function, because the ranking
+quality is actually the deliverable metric, while the sanity check was used merely as an indicator.
+
+### Score presentation: match_percentage
+Added a min-max normalized match_percentage (0-100%) alongside the raw combined_score,
+solely for stakeholder comprehension (it is much easier for a recruiter to understand
+"94% match" than "0.464").
+Documentation: limitation - relative to the current set of ranked candidates, not
+some absolute quality measurement - a "95% match" translates into "most qualified out of the
+candidates considered", not "95% qualified".
+
+### Key insight
+Function correctness is determined by its USE CONTEXT, not by its implementation per se.
+The extract_skills() function was correct in use with resumes but was incorrect when used
+with job postings, even though it was the same code being used on seemingly identical data.
