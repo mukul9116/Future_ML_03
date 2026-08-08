@@ -235,3 +235,43 @@ with job postings, even though it was the same code being used on seemingly iden
   document's text makes the extraction impossible
 - This is noted down as a fundamental limitation of the current technique, not as a bug -
   a truly technical IT job posting would produce longer missing skills list in the same conditions
+
+  ## Day 7 Findings (Evaluation & Bias Analysis)
+
+### Manual Validation of Matches
+Examining real text from top ranked resumes in Healthcare, Sales, and Information-Technology.
+The top matches for all three categories were manually verified as legitimate,
+accurate matches by human judgment - even Information-Technology, despite being
+known to have a very short skill set (4 skills), the ranking algorithm (weighted 0.7 for TF-IDF similarity)
+still manages to find legitimate matches even in cases where skill_overlap is not helpful.
+
+### Balance of Categories
+All 6 categories have been verified to have a similar number of resumes (between 110-120).
+No category is undersampled, therefore sample size should not affect the ranking performance
+across categories.
+
+### Testing for Bias
+- Length of resume vs. similarity_score: r=0.176 (weak) - Cosine similarity is
+  fairly robust to the length of the document as it was designed to be
+- Length of resume vs. number of extracted skills: r=0.538 (moderate to strong)
+  - GENUINE ISSUE OF FAIRNESS. Longer resumes contain more skills regardless of whether
+  the candidate actually has them, which would unfairly affect concise candidates.
+- DECISION: I chose not to alter the formula to adjust for this bias since the
+  current 0.7/0.3 balance was carefully validated on Day 5 to return the proper top-7
+  ranking in each of the six categories. Adjusting could undermine this without proving 
+  improvement.
+
+### Limitations of the Consolidated System (Days 3-7)
+1. Predefined vocabulary for skill extraction: The consolidated system only extracts those
+   skills which are included in a predefined list of 71 terms divided into 6 categories,
+   irrespective of their importance or existence
+2. Context-agnostic matching: Same words were being matched irrespective of its context
+   (e.g. “Policy” in the HR vs. Finance context)
+3. Bias towards resume length: Longer resumes have higher chances of skill extraction,
+   irrespective of the qualifications (r = 0.538)
+4. One job description per category: The ranking will be in accordance with one particular
+   JD of that category and not the generalized role - changing the wording of the same JD can
+   change the outcome (Day 5's JD swap test demonstrates this)
+5. Category matching accuracy (Day 4, 62.7%) is the proxy validation metric and not the
+   actual ranking quality metric - the per-category ranking (validated on Day 5-7) is the
+   actual output and performs significantly better
