@@ -41,29 +41,46 @@ def identify_missing_skills(resume_skills, jd_skills):
 def full_candidate_report(jd_category, top_n=10):
     jd_idx = list(df_cleaned_jd['category']).index(jd_category)
     jd_skills = df_cleaned_jd.iloc[jd_idx]['extracted_skills']
-    
+
     results = df_cleaned_resume.copy()
     results['similarity_score'] = similarity_matrix[:, jd_idx]
     results['skill_overlap'] = results['extracted_skills'].apply(lambda skills: skill_overlap_score(skills, jd_skills))
     results['combined_score'] = (0.7 * results['similarity_score']) + (0.3 * results['skill_overlap'])
     results['missing_skills'] = results['extracted_skills'].apply(lambda skills: identify_missing_skills(skills, jd_skills))
-    
+
     min_score = results['combined_score'].min()
     max_score = results['combined_score'].max()
     results['match_percentage'] = ((results['combined_score'] - min_score) / (max_score - min_score) * 100).round(1)
-    
-    ranked = results.sort_values('combined_score', ascending=False)
-    return ranked[['Category', 'match_percentage', 'missing_skills']].head(top_n)
 
+    ranked = results.sort_values('combined_score', ascending=False)
+    return ranked[['Category', 'match_percentage', 'similarity_score', 'skill_overlap', 'missing_skills']].head(top_n)
+
+# Single button that generates and stores the report
 if st.button("Rank Candidates", key="rank_button"):
     st.session_state['report'] = full_candidate_report(selected_category, top_n)
+    st.session_state['report_category'] = selected_category  # remember which category this report is for
 
+# Single block that displays everything, only once, in the right order
 if 'report' in st.session_state:
     report = st.session_state['report']
+    report_category = st.session_state['report_category']
+
     st.dataframe(report)
-    
+
+    st.subheader("Why did the top candidate rank highest?")
+    top = report.iloc[0]
+    jd_skill_list = df_cleaned_jd[df_cleaned_jd['category'] == report_category]['extracted_skills'].iloc[0]
+    total_required = len(jd_skill_list)
+    skill_count_matched = total_required - len(top['missing_skills'])
+
+    st.write(f"""
+    This candidate had the strongest overall text similarity to the job description
+    (similarity score: {top['similarity_score']:.3f}) and matched **{skill_count_matched} out of {total_required}**
+    required skills. Missing skills: {', '.join(top['missing_skills']) if len(top['missing_skills']) > 0 else 'none'}.
+    """)
+
     st.subheader("View Resume Details")
     selected_resume_idx = st.selectbox("Select a resume to view:", options=report.index, key="resume_select")
-    
+
     if st.button("Show Resume Text", key="show_resume_button"):
         st.write(df_cleaned_resume.loc[selected_resume_idx, 'Resume_str'][:1500])
