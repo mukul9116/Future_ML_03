@@ -275,3 +275,21 @@ across categories.
 5. Category matching accuracy (Day 4, 62.7%) is the proxy validation metric and not the
    actual ranking quality metric - the per-category ranking (validated on Day 5-7) is the
    actual output and performs significantly better
+
+## Day 8-9 Findings (Demo Interface)
+
+- Developed a Streamlit web app (app.py), which wrapped the ranking/gap analysis pipeline
+- Deliberately chose Streamlit over the in-notebook demo because of the valuable transferable
+  skills, even though it requires setting up a local environment (venv, local libraries installation),
+  which is different from the Colab-based environment used for the entire project
+- App loads pre-computed and validated pickles (df_cleaned_resume.pkl, df_cleaned_jd.pkl,
+  similarity_matrix.npy), and does not execute the pipeline - ensures that the app contains the
+  exact changes and validation performed on Days 3-7, not the new run
+- Solved two real-life issues specific to Streamlit (not seen in Python/notebook environment in
+  this project before)
+  1. StreamlitDuplicateElementId - solved by adding unique `key` parameters to the widgets
+  2. Button state resetting on rerun - Streamlit reruns the entire script on every widget
+     interaction, and st.button() function returns True only for the exact rerun it was clicked on.
+     Resolved using st.session_state variable to save the state of the ranking report
+- Features include: Category drop-down, adjustable number of results, Ranked candidates
+  with match_percentage and missing_skills, resume viewer for any ranked candidate
